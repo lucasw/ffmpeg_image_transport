@@ -55,7 +55,7 @@ namespace ffmpeg_image_transport {
     encoder_.setBitRate(config.bit_rate);
     encoder_.setGOPSize(config.gop_size);
     encoder_.setMeasurePerformance(config.measure_performance);
-    ROS_DEBUG_STREAM("FFMPEGPublisher codec: " << config.encoder <<
+    ROS_INFO_STREAM_THROTTLE(1.0, "FFMPEGPublisher codec: " << config.encoder <<
                     ", profile: " << config.profile <<
                     ", preset: " << config.preset <<
                     ", bit rate: " << config.bit_rate <<
@@ -67,6 +67,8 @@ namespace ffmpeg_image_transport {
   FFMPEGPublisher::publish(const sensor_msgs::Image& message,
                            const PublishFn &publish_fn) const {
     FFMPEGPublisher *me = const_cast<FFMPEGPublisher *>(this);
+
+    // TODO(lucasw) what happens if width and height change- need to reinitialize?
     if (!me->encoder_.isInitialized()) {
       me->initConfigServer();
       me->publishFunction_ = &publish_fn;
@@ -90,7 +92,11 @@ namespace ffmpeg_image_transport {
   void FFMPEGPublisher::initConfigServer() {
     Lock lock(configMutex_);
     if (!configServer_) {
+      ROS_INFO_STREAM("reset config dynamic reconfigure server");
       configServer_.reset(new ConfigServer(*nh_));
+      // TODO(lucasw) this forces the reconfigure equality to fail, which is necessary when
+      // using this with git@github.com:lucasw/dynamic_reconfigure init_default_values branch
+      config_.encoder = "";
       // this will trigger an immediate callback!
       configServer_->setCallback(boost::bind(&FFMPEGPublisher::configure, this,
             boost::placeholders::_1, boost::placeholders::_2));

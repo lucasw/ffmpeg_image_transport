@@ -67,7 +67,7 @@ namespace ffmpeg_image_transport {
                                   "multiple of 32 but is: " + std::to_string(width)));
       }
       // find codec
-      AVCodec *codec = avcodec_find_encoder_by_name(codecName_.c_str());
+      const AVCodec *codec = avcodec_find_encoder_by_name(codecName_.c_str());
       if (!codec) {
         throw (std::runtime_error("cannot find codec: " + codecName_));
       }
